@@ -31,15 +31,15 @@ class StaticTests(TestCase):
             file_path = path.join(media_dir, filename)
             with open(file_path, 'rb') as fp:
                 self.assertEqual(fp.read(), response_content)
-            self.assertEqual(len(response_content), int(response['Content-Length']))
+            self.assertEqual(open(file_path).read(), response_content)
             self.assertEqual(mimetypes.guess_type(file_path)[1], response.get('Content-Encoding', None))
 
     def test_chunked(self):
         "The static view should stream files in chunks to avoid large memory usage"
         response = self.client.get('/views/%s/%s' % (self.prefix, 'long-line.txt'))
-        first_chunk = next(response.streaming_content)
+        first_chunk = iter(response).next()
         self.assertEqual(len(first_chunk), STREAM_CHUNK_SIZE)
-        second_chunk = next(response.streaming_content)
+        second_chunk = response.next()
         self.assertEqual(len(second_chunk), 1451)
 
     def test_unknown_mime_type(self):
@@ -88,8 +88,12 @@ class StaticTests(TestCase):
         response.close()
         with open(path.join(media_dir, file_name), 'rb') as fp:
             self.assertEqual(fp.read(), response_content)
-        self.assertEqual(len(response_content),
-                          int(response['Content-Length']))
+        file = open(path.join(media_dir, file_name))
+        self.assertEqual(file.read(), response_content)
+        self.assertEqual(
+            len(response_content),
+            int(response['Content-Length'])
+        )
 
     def test_invalid_if_modified_since2(self):
         """Handle even more bogus If-Modified-Since values gracefully
@@ -105,8 +109,12 @@ class StaticTests(TestCase):
         response.close()
         with open(path.join(media_dir, file_name), 'rb') as fp:
             self.assertEqual(fp.read(), response_content)
-        self.assertEqual(len(response_content),
-                          int(response['Content-Length']))
+        file = open(path.join(media_dir, file_name))
+        self.assertEqual(file.read(), response_content)
+        self.assertEqual(
+            len(response_content),
+            int(response['Content-Length'])
+        )
 
 
 class StaticHelperTest(StaticTests):
