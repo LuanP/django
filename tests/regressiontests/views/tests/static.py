@@ -40,6 +40,7 @@ class StaticTests(TestCase):
         first_chunk = iter(response).next()
         self.assertEqual(len(first_chunk), STREAM_CHUNK_SIZE)
         second_chunk = response.next()
+        response.close()
         self.assertEqual(len(second_chunk), 1451)
 
     def test_unknown_mime_type(self):
